@@ -1,9 +1,7 @@
 import glsneuron
 import numpy as np
-import multiprocessing as mp
-
-
-
+from sklearn.preprocessing import normalize
+from scipy.spatial.distance import cosine
 
 class GLSLayer():
     """
@@ -46,18 +44,6 @@ class GLSLayer():
         return self.M
 
 
-    def normalize(self, X):
-        """
-        Normalize the layer with simuli X
-        Returns:
-        x_norm - the normalized stimulus
-        """
-        X_maxs = np.max(X, axis=0)
-        X_mins = np.min(X, axis=0)
-        X_norm = (X - X_mins) / (X_maxs - X_mins)
-        return X_norm
-
-
     def predict(self, x):
         """
         Predict the class of a stimulus x
@@ -67,15 +53,13 @@ class GLSLayer():
         firing_times = np.zeros(self.n)
         for i, neuron in enumerate(self.neurons):
             firing_times[i] = neuron.activate(x[i])
+            neuron.reset()
         # Compute cosine similaries between the stimulus and the gls maps
-        cosine_similarities = np.zeros(self.c)
-        for c, m in enumerate(self.M):
-            norm_yh = np.linalg.norm(firing_times)
-            norm_y = np.linalg.norm(m)
-            cosine_similarities[c] = np.dot(firing_times, m) / (norm_y * norm_yh)
+        cosine_similarities = []
+        for m in self.M:
+            cosine_similarities.append(cosine(m, firing_times))
         # Return the class with the highest cosine similarity
-        return self.classes[np.argmax(cosine_similarities)]
-
+        return self.classes[np.argmin(cosine_similarities)]
 
     def predict_all(self, X):
         """
