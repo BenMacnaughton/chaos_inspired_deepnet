@@ -75,4 +75,56 @@ class GLSLayer():
             cosine_similarities[c] = np.dot(firing_times, m) / (norm_y * norm_yh)
         # Return the class with the highest cosine similarity
         return self.classes[np.argmax(cosine_similarities)]
-  
+
+
+    def predict_all(self, X):
+        """
+        Predict the class of all stimuli X
+        Returns:
+        Y - the classes of the stimuli
+        """
+        Y = []
+        for x in X:
+            Y.append(self.predict(x))
+        return Y
+
+
+    def train_test_split(self, X, Y, m):
+        """
+        Shuffle datasets and get
+        a training set with m stimuli and a test set with the rest
+        Returns:
+        X_train, Y_train, X_test, Y_test
+        """
+        p = np.random.permutation(len(X))
+        X = X[p]
+        Y = Y[p]
+
+        X_train = []
+        Y_train = []
+        X_test = []
+        Y_test = []
+        for i, x in enumerate(X):
+            if i % m == 0:
+                X_test.append(x)
+                Y_test.append(Y[i])
+            else:
+                X_train.append(x)
+                Y_train.append(Y[i])
+        return X_train, Y_train, X_test, Y_test
+
+
+    def train_test(self, X, Y, m):
+        """
+        Train the layer with a training set and test it with a test set
+        Returns:
+        M_train, M_test - the training and test gls maps
+        """
+        X_norm = self.normalize(X)
+        X_train, Y_train, X_test, Y_test = self.train_test_split(X_norm, Y, m)
+        self.train(X_train, Y_train)
+        acc = 0
+        for i, x in enumerate(X_test):
+            if self.predict(x) == Y_test[i]:
+                acc += 1
+        return self.M, acc / len(X_test)
