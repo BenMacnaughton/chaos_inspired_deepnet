@@ -19,7 +19,7 @@ class GLSLayer(nn.Module):
 
     def fire_neurons(self, x: torch.Tensor):
         m = torch.ones(x.shape[0]).T * self.q # m.shape is len(x) x len(q)
-        k = torch.ones(x.shape)
+        k = torch.ones(m.shape)
         m_indices = torch.nonzero(m)
 
         while len(m_indices):
