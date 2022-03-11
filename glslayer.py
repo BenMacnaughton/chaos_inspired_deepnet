@@ -1,114 +1,81 @@
 import glsneuron
 import numpy as np
 from sklearn.preprocessing import normalize
+from sklearn.model_selection import train_test_split
 from scipy.spatial.distance import cosine
+import torch
+from torch import nn
+from torch.nn import functional as F
+import pytorch_lightning as pl
 
-class GLSLayer():
-    """
-    A class for a GLS layer
-    """
+class GLSLayer(nn.Module):
+    
+    def __init__(self, b: torch.Tensor, q: torch.Tensor, e: torch.Tensor, classes: int):
+        super(GLSLayer, self).__init__()
+        self.b = nn.Parameter(b)
+        self.q = nn.Parameter(q)
+        self.e = nn.Parameter(e)
+        self.M = nn.Parameter(torch.zeros((classes, b.shape[0])))
 
-    def __init__(self, n, b, q, e):
-        """
-        Initialize the layer with:
-        - n neurons
-        - b: the gls map coefficient on the interval [0, 1)
-        - q: the initial membrane potential on the interval [0, 1)
-        - e: the error range on the interval [0, 1) (typically ≤ 0.1)
-        """
-        self.n = n
-        self.neurons = []
-        for _ in range(n):
-            self.neurons.append(glsneuron.GLSNeuron(b, q, e))
+   
+    def fire_neurons(self, x: torch.Tensor):
+        m = torch.ones(x.shape[0]).T * self.q # m.shape is len(x) x len(q)
+        k = torch.ones(x.shape)
+        m_indices = torch.nonzero(m)
+        
+        while len(m_indices):
+            m = torch.where(m < self.b, m / self.b, (1 - m) / (1 - self.b)) # Condition, True, False
+            under = m < x - self.e 
+            over = m > x + self.e
+            valid = under + over
+            m_indices = torch.nonzero(valid)
+            k[m_indices[:, 0], m_indices[:, 1]] += 1
+            
+        return k
+    
 
-
-    def train(self, X, Y):
-        """
-        Train the layer with a stimulus x
-        Returns:
-        M - a C x N matrix of the gls maps
-        """
-        self.classes = list(set(Y))
-        self.c = len(self.classes)
-        self.M = np.zeros((self.c, self.n))
-        self.class_instances = np.zeros(self.c)
-        for i, x in enumerate(X):
-            c = Y[i]
-            self.class_instances[c] += 1
-            firing_times = []
-            for j, neuron in enumerate(self.neurons):
-                firing_times.append(neuron.activate(x[j]))
-                neuron.reset()
-            self.M[c] += firing_times
-        self.M /= self.class_instances[:, None]
-        return self.M
-
-
-    def predict(self, x):
-        """
-        Predict the class of a stimulus x
-        Returns:
-        c - the class of the stimulus
-        """
-        firing_times = np.zeros(self.n)
-        for i, neuron in enumerate(self.neurons):
-            firing_times[i] = neuron.activate(x[i])
-            neuron.reset()
-        # Compute cosine similaries between the stimulus and the gls maps
-        cosine_similarities = []
-        for m in self.M:
-            cosine_similarities.append(cosine(m, firing_times))
-        # Return the class with the highest cosine similarity
-        return self.classes[np.argmin(cosine_similarities)]
-
-    def predict_all(self, X):
-        """
-        Predict the class of all stimuli X
-        Returns:
-        Y - the classes of the stimuli
-        """
-        Y = []
-        for x in X:
-            Y.append(self.predict(x))
-        return Y
+    def forward(self, x: torch.Tensor):
+        k = self.fire_neurons(x)
+            
+        classes = []
+        
+        for sample in k:
+            similarities = F.cosine_similarity(sample, self.M)
+            classes.append(torch.argmax(similarities))
+            
+        return torch.tensor(classes)
 
 
-    def train_test_split(self, X, Y, m):
-        """
-        Shuffle datasets and get
-        a training set with m stimuli and a test set with the rest
-        Returns:
-        X_train, Y_train, X_test, Y_test
-        """
-        p = np.random.permutation(len(X))
-        X = X[p]
-        Y = Y[p]
-
-        X_train = []
-        Y_train = []
-        X_test = []
-        Y_test = []
-        for i, x in enumerate(X):
-            if i % m == 0:
-                X_test.append(x)
-                Y_test.append(Y[i])
-            else:
-                X_train.append(x)
-                Y_train.append(Y[i])
-        return X_train, Y_train, X_test, Y_test
+    def train(self, x: torch.Tensor, y: torch.Tensor):
+        k = self.fire_neurons(x)
+        occurences = np.zeros(self.M.shape[0])
+        
+        for idx in range(len(k)):
+            self.M[y[idx]] += k[idx]
+            occurences[y[idx]] += 1
+            
+        self.M /= occurences[:, None]
 
 
-    def train_test(self, X, Y, m):
-        """
-        Train the layer with a training set and test it with a test set
-        Returns:
-        M_train, M_test - the training and test gls maps
-        """
-        X_norm = self.normalize(X)
-        X_train, Y_train, X_test, Y_test = self.train_test_split(X_norm, Y, m)
-        self.train(X_train, Y_train)
-        acc = 0
-        for i, x in enumerate(X_test):
-            if self.predict(x) == Y_test[i]:
-                acc += 1
-        return self.M, acc / len(X_test)
+class Trainer():
+    
+    def __init__(self, model: type[GLSLayer]):
+        self.model = model
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+    def load_data(self, x: np.array, y: np.array, test_size=0.2, random_state=None):
+        p = np.random.permutation(len(x))
+        X = x[p]
+        Y = y[p]
+        
+        X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=test_size, random_state=random_state)
+        
+        self.X_train = torch.tensor(X_train).float().to(self.device)
+        self.X_test = torch.tensor(X_test).float().to(self.device)
+        self.y_train = torch.tensor(y_train).float().to(self.device)
+        self.y_test = torch.tensor(y_test).float().to(self.device)
+
+
+    def train(self):
+        self.model.train(self.X_train, self.y_train)    
