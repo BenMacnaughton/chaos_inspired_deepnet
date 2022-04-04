@@ -13,7 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url='https://github.com/BenMacnaughton/chaos_inspired_deepnet',
     license='MIT',
-    packages=['chaos_inspired_deepnet'],
+    packages=['gls'],
     install_requires=[
         'numpy',
         'sklearn',
