@@ -10,6 +10,14 @@ from torch.nn import functional as F
 class GLSLayer(nn.Module):
 
     def __init__(self, b: torch.Tensor, q: torch.Tensor, e: torch.Tensor, classes: int):
+        """Create an instance of a GLSLayer.
+
+        Args:
+            b (torch.Tensor): topological transitivity coefficient (size: (len(neurons), ))
+            q (torch.Tensor): Membrane potential (size: (len(neurons), ))
+            e (torch.Tensor): epsilon of neighborhood (size: (len(neurons), ))
+            classes (int): number of classes in output
+        """
         super(GLSLayer, self).__init__()
         self.b = nn.Parameter(b)
         self.q = nn.Parameter(q)
@@ -18,7 +26,7 @@ class GLSLayer(nn.Module):
 
 
     def fire_neurons(self, x: torch.Tensor):
-        m = torch.ones(x.shape[0]).T * self.q # m.shape is len(x) x len(q)
+        m = torch.ones(x.shape[0], 1) * self.q # m.shape is len(x) x len(q)
         k = torch.ones(m.shape)
         m_indices = torch.nonzero(m)
 
@@ -26,21 +34,26 @@ class GLSLayer(nn.Module):
             m = torch.where(m < self.b, m / self.b, (1 - m) / (1 - self.b)) # Condition, True, False
             under = m < x - self.e 
             over = m > x + self.e
-            valid = under + over
-            m_indices = torch.nonzero(valid)
+            invalid = under + over
+            m_indices = torch.nonzero(invalid)
             k[m_indices[:, 0], m_indices[:, 1]] += 1
 
         return k
 
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor, return_logits: bool = False):
         k = self.fire_neurons(x)
 
         classes = []
-
-        for sample in k:
+        logits = torch.zeros(x.shape[0], self.M.shape[0])
+        
+        for idx, sample in enumerate(k):
             similarities = F.cosine_similarity(sample, self.M)
+            logits[idx] = similarities
             classes.append(torch.argmax(similarities))
+
+        if return_logits:
+            return logits
 
         return torch.tensor(classes)
 
