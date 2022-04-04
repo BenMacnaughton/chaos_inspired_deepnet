@@ -31,6 +31,8 @@ class GLSLayer(nn.Module):
         k = torch.ones(m.shape, device=self.device)
         m_indices = torch.nonzero(m)
 
+        idx = 0
+
         while len(m_indices):
             m = torch.where(m < self.b, m / self.b, (1 - m) / (1 - self.b)) # Condition, True, False
             under = m < x - self.e 
@@ -38,6 +40,10 @@ class GLSLayer(nn.Module):
             invalid = under + over
             m_indices = torch.nonzero(invalid)
             k[m_indices[:, 0], m_indices[:, 1]] += 1
+
+            if idx % 100 == 0:
+                print("Convergence: {}/{}".format(m.shape[-1] - len(m_indices), m.shape[-1]))
+            idx += 1
 
         return k
 
