@@ -23,11 +23,12 @@ class GLSLayer(nn.Module):
         self.q = nn.Parameter(q)
         self.e = nn.Parameter(e)
         self.M = nn.Parameter(torch.zeros((classes, b.shape[0])))
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
     def fire_neurons(self, x: torch.Tensor):
-        m = torch.ones(x.shape[0], 1) * self.q # m.shape is len(x) x len(q)
-        k = torch.ones(m.shape)
+        m = torch.ones(x.shape[0], 1, device=self.device) * self.q # m.shape is len(x) x len(q)
+        k = torch.ones(m.shape, device=self.device)
         m_indices = torch.nonzero(m)
 
         while len(m_indices):
@@ -45,7 +46,7 @@ class GLSLayer(nn.Module):
         k = self.fire_neurons(x)
 
         classes = []
-        logits = torch.zeros(x.shape[0], self.M.shape[0])
+        logits = torch.zeros(x.shape[0], self.M.shape[0], device=self.device)
         
         for idx, sample in enumerate(k):
             similarities = F.cosine_similarity(sample, self.M)
@@ -60,7 +61,7 @@ class GLSLayer(nn.Module):
 
     def train(self, x: torch.Tensor, y: torch.Tensor):
         k = self.fire_neurons(x)
-        occurences = np.zeros(self.M.shape[0])
+        occurences = torch.zeros(self.M.shape[0])
 
         for idx in range(len(k)):
             self.M[y[idx]] += k[idx]
