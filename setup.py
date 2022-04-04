@@ -16,7 +16,7 @@ setuptools.setup(
     packages=['gls'],
     install_requires=[
         'numpy',
-        'sklearn',
+        'scikit-learn',
         'torch'
     ],
 )
