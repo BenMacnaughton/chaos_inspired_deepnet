@@ -50,10 +50,6 @@ class GLSLayer(nn.Module):
                 last_indices = m_indices
                 k[idx, m_indices] += 1
 
-                if counter % 100 == 0:
-                    print("Convergence of sample {}: {}/{}".format(idx + 1, len(m[0]) - len(m_indices), len(m[0])))
-                counter += 1
-            
             print("Sample {} Converged".format(idx + 1))
 
         return k
@@ -68,7 +64,7 @@ class GLSLayer(nn.Module):
         for idx, sample in enumerate(k):
             similarities = F.cosine_similarity(sample, self.M)
             logits[idx] = similarities
-            classes.append(torch.argmax(similarities))
+            classes.append(torch.argmax(similarities).cpu())
 
         if return_logits:
             return logits

@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     
 setuptools.setup(
     name='gls',
-    version='0.3.0',
+    version='0.3.1',
     author='552 Group 4',
     author_email='aidan.williams@mail.mcgill.ca',
     description='GLS Layer Implementation',
