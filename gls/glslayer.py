@@ -32,7 +32,7 @@ class GLSLayer(nn.Module):
         
         for idx in range(len(m)):
             m_indices = torch.nonzero(m[idx])
-            last_indices = m_indices
+            last_indices = m_indices.cpu()
 
             counter = 0
             
@@ -45,7 +45,7 @@ class GLSLayer(nn.Module):
                 under = m[idx] < x[idx] - self.e 
                 over = m[idx] > x[idx] + self.e
                 invalid = under + over
-                m_indices = np.intersect1d(torch.nonzero(invalid), last_indices)
+                m_indices = np.intersect1d(torch.nonzero(invalid).cpu(), last_indices)
                 last_indices = m_indices
                 k[idx, m_indices] += 1
 
