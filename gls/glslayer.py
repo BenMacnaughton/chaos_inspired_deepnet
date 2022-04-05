@@ -49,9 +49,11 @@ class GLSLayer(nn.Module):
                 last_indices = m_indices
                 k[idx, m_indices] += 1
 
-                if counter % 100 == 0:
-                    print("Convergence of sample {}: {}/{}".format(idx + 1, len(m[0]) - len(m_indices), len(m[0])))
-                counter += 1
+                # if counter % 1000 == 0:
+                #     print("Convergence of sample {}: {}/{}".format(idx + 1, len(m[0]) - len(m_indices), len(m[0])))
+                # counter += 1
+            
+            print("Sample {} Converged".format(idx + 1))
 
         return k
 
