@@ -29,21 +29,29 @@ class GLSLayer(nn.Module):
     def fire_neurons(self, x: torch.Tensor):
         m = torch.ones(x.shape[0], 1, device=self.device) * self.q # m.shape is len(x) x len(q)
         k = torch.ones(m.shape, device=self.device)
-        m_indices = torch.nonzero(m)
+        
+        for idx in range(len(m)):
+            m_indices = torch.nonzero(m[idx])
+            last_indices = m_indices
 
-        idx = 0
+            counter = 0
+            
+            while len(m_indices):
+                m[idx] = torch.where(
+                    m[idx] < self.b,
+                    m[idx] / self.b,
+                    (1 - m[idx]) / (1 - self.b)
+                ) # Condition, True, False
+                under = m[idx] < x[idx] - self.e 
+                over = m[idx] > x[idx] + self.e
+                invalid = under + over
+                m_indices = np.intersect1d(torch.nonzero(invalid), last_indices)
+                last_indices = m_indices
+                k[idx, m_indices] += 1
 
-        while len(m_indices):
-            m = torch.where(m < self.b, m / self.b, (1 - m) / (1 - self.b)) # Condition, True, False
-            under = m < x - self.e 
-            over = m > x + self.e
-            invalid = under + over
-            m_indices = torch.nonzero(invalid)
-            k[m_indices[:, 0], m_indices[:, 1]] += 1
-
-            if idx % 100 == 0:
-                print("Convergence: {}/{}".format(m.shape[-1] - len(m_indices), m.shape[-1]))
-            idx += 1
+                if counter % 100 == 0:
+                    print("Convergence of sample {}: {}/{}".format(idx + 1, len(m[0]) - len(m_indices), len(m[0])))
+                counter += 1
 
         return k
 
