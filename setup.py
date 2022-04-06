@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     
 setuptools.setup(
     name='gls',
-    version='0.3.1',
+    version='0.4.0',
     author='552 Group 4',
     author_email='aidan.williams@mail.mcgill.ca',
     description='GLS Layer Implementation',
@@ -17,6 +17,7 @@ setuptools.setup(
     install_requires=[
         'numpy',
         'scikit-learn',
-        'torch'
+        'torch',
+        'torchvision'
     ],
 )
