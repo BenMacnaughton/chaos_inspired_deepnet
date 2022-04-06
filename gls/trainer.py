@@ -2,7 +2,7 @@ import torch
 from sklearn.model_selection import train_test_split
 import numpy as np
 
-from glslayer import GLSLayer
+from gls.glslayer import GLSLayer
 
 
 class Trainer():
