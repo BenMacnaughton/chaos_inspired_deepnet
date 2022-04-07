@@ -47,8 +47,11 @@ class GLSLayer(nn.Module):
                 m_indices = np.intersect1d(torch.nonzero(invalid).cpu(), last_indices)
                 last_indices = m_indices
                 k[idx, m_indices] += 1
-
-            print("Sample {} Converged".format(idx + 1))
+                
+                counter += 1
+                
+                if counter > 10000:
+                    break
 
         return k
 
