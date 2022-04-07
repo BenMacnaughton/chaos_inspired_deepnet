@@ -13,12 +13,18 @@ class DeepModel(nn.Module):
         self.gls = gls
 
 
-    def forward(self, x, logits=False):
+    def forward(self, x: torch.Tensor, logits: bool=False):
         x = self.base(x)
         x = self.flatten(x)
         x = self.gls(x, return_logits=logits)
 
         return x
+
+
+    def train(self, x: torch.Tensor, y: torch.Tensor):
+        x = self.base(x)
+        x = self.flatten(x)
+        self.gls.train(x, y)
 
 
 class VGG(DeepModel):

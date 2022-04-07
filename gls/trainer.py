@@ -1,13 +1,14 @@
 import torch
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import (accuracy_score,
+                            confusion_matrix,
+                            f1_score)
 import numpy as np
-
-from gls.glslayer import GLSLayer
 
 
 class Trainer():
 
-    def __init__(self, model: GLSLayer):
+    def __init__(self, model: torch.nn.Module):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = model.to(self.device)
 
@@ -29,8 +30,17 @@ class Trainer():
         self.X_train = torch.tensor(X_train).float().to(self.device)
         self.X_test = torch.tensor(X_test).float().to(self.device)
         self.y_train = torch.tensor(y_train).to(self.device)
-        self.y_test = torch.tensor(y_test).to(self.device)
+        self.y_test = torch.tensor(y_test)
 
 
     def train(self):
         self.model.train(self.X_train, self.y_train)
+
+
+    def evaluate(self):
+        predictions = self.model(self.X_test)
+        acc = accuracy_score(self.y_test, predictions)
+        conf = confusion_matrix(self.y_test, predictions)
+        f1 = f1_score(self.y_test, predictions, average='macro')
+
+        return acc, conf, f1
