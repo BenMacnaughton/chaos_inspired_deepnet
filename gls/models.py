@@ -37,7 +37,7 @@ class VGG(DeepModel):
         self.base = nn.Sequential(self.vgg_features, self.vgg_avg)
 
 
-class ResNet(nn.Module):
+class ResNet(DeepModel):
 
     def __init__(self, gls: GLSLayer):
         super(ResNet, self).__init__(gls)
@@ -45,7 +45,7 @@ class ResNet(nn.Module):
         self.base = nn.Sequential(*list(self.resnet.children())[:-1]) # remove last layer
 
 
-class EfficientNet(nn.Module):
+class EfficientNet(DeepModel):
 
     def __init__(self, gls: GLSLayer):
         super(EfficientNet, self).__init__(gls)
