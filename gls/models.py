@@ -2,7 +2,7 @@ import torch
 from torch import nn
 import torchvision.models as models
 
-from gls import GLSLayer
+from gls.glslayer import GLSLayer
 
 
 class DeepModel(nn.Module):
