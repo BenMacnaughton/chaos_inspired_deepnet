@@ -25,6 +25,15 @@ class GLSLayer(nn.Module):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
+    @classmethod
+    def create_instance(cls, b, q, e, classes):
+        
+        def _create(neurons):
+            return cls(b, q, e, classes, neurons)
+        
+        return _create
+
+
     def fire_neurons(self, x: torch.Tensor):
         m = torch.ones(x.shape, device=self.device) * self.q # m.shape is len(x) x len(x[0])
         k = torch.ones(m.shape, device=self.device)
