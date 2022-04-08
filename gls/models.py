@@ -1,11 +1,15 @@
+from typing import Callable
+
 import torch
 from torch import nn
 import torchvision.models as models
 
+from gls.glslayer import GLSLayer
+
 
 class DeepModel(nn.Module):
 
-    def __init__(self, gls_create: function):
+    def __init__(self, gls_create: Callable[[int], GLSLayer]):
         super(DeepModel, self).__init__()
         self.flatten = nn.Flatten()
         self.gls_create = gls_create
@@ -27,7 +31,7 @@ class DeepModel(nn.Module):
 
 class VGG(DeepModel):
 
-    def __init__(self, gls_create: function, final_size=(1, 1)):
+    def __init__(self, gls_create: Callable[[int], GLSLayer], final_size=(1, 1)):
         super(VGG, self).__init__(gls_create)
         self.vgg = models.vgg16(pretrained=True)
         self.vgg_features = self.vgg.features[:-1] # Remove last pooling layer to fix sizing on mnist
@@ -38,7 +42,7 @@ class VGG(DeepModel):
 
 class ResNet(DeepModel):
 
-    def __init__(self, gls_create: function):
+    def __init__(self, gls_create: Callable[[int], GLSLayer]):
         super(ResNet, self).__init__(gls_create)
         self.resnet = models.resnet50(pretrained=True)
         self.base = nn.Sequential(*list(self.resnet.children())[:-1]) # remove last layer
@@ -46,7 +50,7 @@ class ResNet(DeepModel):
 
 class EfficientNet(DeepModel):
 
-    def __init__(self, gls_create: function):
+    def __init__(self, gls_create: Callable[[int], GLSLayer]):
         super(EfficientNet, self).__init__(gls_create)
         self.efficientnet = models.efficientnet_b7(pretrained=True)
         self.base = nn.Sequential(*list(self.efficientnet.children())[:-1]) # remove last layer
