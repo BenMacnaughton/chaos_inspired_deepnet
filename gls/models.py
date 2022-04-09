@@ -37,7 +37,7 @@ class VGG(DeepModel):
         self.vgg = models.vgg16(pretrained=True)
         self.vgg_features = self.vgg.features[:-1] # Remove last pooling layer to fix sizing on mnist
         self.vgg_avg = nn.AdaptiveAvgPool2d(output_size=final_size)
-        self.base = nn.Sequential(self.vgg_features, self.vgg_avg)
+        self.base = nn.Sequential(self.vgg_features, self.vgg_avg).eval()
         self.gls = self.gls_create(512)
 
 
@@ -46,7 +46,7 @@ class ResNet(DeepModel):
     def __init__(self, gls_create: Callable[[int], GLSLayer]):
         super(ResNet, self).__init__(gls_create)
         self.resnet = models.resnet50(pretrained=True)
-        self.base = nn.Sequential(*list(self.resnet.children())[:-1]) # remove last layer
+        self.base = nn.Sequential(*list(self.resnet.children())[:-1]).eval() # remove last layer
         self.gls = self.gls_create(2048)
 
 class EfficientNet(DeepModel):
@@ -54,5 +54,5 @@ class EfficientNet(DeepModel):
     def __init__(self, gls_create: Callable[[int], GLSLayer]):
         super(EfficientNet, self).__init__(gls_create)
         self.efficientnet = models.efficientnet_b7(pretrained=True)
-        self.base = nn.Sequential(*list(self.efficientnet.children())[:-1]) # remove last layer
+        self.base = nn.Sequential(*list(self.efficientnet.children())[:-1]).eval() # remove last layer
         self.gls = self.gls_crate(2560)

@@ -21,6 +21,10 @@ class GLSLayer(nn.Module):
         self.q = nn.Parameter(q)
         self.e = nn.Parameter(e)
         self.M = nn.Parameter(torch.zeros((classes, neurons)))
+        
+        self.b.requires_grad = False
+        self.q.requires_gra = False
+        self.e.requires_grad = False
         self.M.requires_grad = False
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -46,7 +50,7 @@ class GLSLayer(nn.Module):
             
             while len(m_indices):
                 m[idx] = torch.where(
-                    m[idx] < self.b, # maybe all need to be less than self.b?
+                    m[idx] < self.b,
                     m[idx] / self.b,
                     (1 - m[idx]) / (1 - self.b)
                 ) # Condition, True, False
