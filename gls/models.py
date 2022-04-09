@@ -13,6 +13,7 @@ class DeepModel(nn.Module):
         super(DeepModel, self).__init__()
         self.flatten = nn.Flatten()
         self.gls_create = gls_create
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
     def forward(self, x: torch.Tensor, logits: bool=False):
@@ -23,10 +24,10 @@ class DeepModel(nn.Module):
         return x
 
 
-    def train(self, x: torch.Tensor, y: torch.Tensor):
+    def fit(self, x: torch.Tensor, y: torch.Tensor):
         x = self.base(x)
         x = self.flatten(x)
-        self.gls.train(x, y)
+        self.gls.fit(x, y)
 
 
 class VGG(DeepModel):

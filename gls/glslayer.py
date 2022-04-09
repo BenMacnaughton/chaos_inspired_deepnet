@@ -82,7 +82,7 @@ class GLSLayer(nn.Module):
         return torch.tensor(classes)
 
 
-    def train(self, x: torch.Tensor, y: torch.Tensor):
+    def fit(self, x: torch.Tensor, y: torch.Tensor):
         k = self.fire_neurons(x)
         occurences = torch.zeros(self.M.shape[0], device=self.device)
         self.M -= self.M # zero M
