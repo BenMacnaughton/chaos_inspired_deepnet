@@ -19,6 +19,7 @@ class DeepModel(nn.Module):
     def forward(self, x: torch.Tensor, logits: bool=False):
         x = self.base(x)
         x = self.flatten(x)
+        x = self.normalize(x)
         x = self.gls(x, return_logits=logits)
 
         return x
@@ -28,6 +29,12 @@ class DeepModel(nn.Module):
         x = self.base(x)
         x = self.flatten(x)
         self.gls.fit(x, y)
+
+
+    def normalize(self, x: torch.Tensor):
+        min_x = torch.min(x)
+        x_ = x - min_x
+        return x_ / (torch.max(x) - min_x)
 
 
 class VGG(DeepModel):
