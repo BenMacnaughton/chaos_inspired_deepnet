@@ -28,6 +28,7 @@ class DeepModel(nn.Module):
     def fit(self, x: torch.Tensor, y: torch.Tensor):
         x = self.base(x)
         x = self.flatten(x)
+        x = self.normalize(x)
         self.gls.fit(x, y)
 
 
