@@ -34,7 +34,7 @@ class Trainer():
 
 
     def train(self):
-        self.model.train(self.X_train, self.y_train)
+        self.model.fit(self.X_train, self.y_train)
 
 
     def evaluate(self):
